@@ -105,20 +105,47 @@ function createNewTab(url) {
 
   tabsList.appendChild(tabElement);
 
-  // Create webview
+  // Create webview with persistent session
   const webview = document.createElement("webview");
   webview.id = "webview-" + tabId;
+  webview.setAttribute("partition", "persist:main"); // Enable persistent session
+  webview.setAttribute("allowpopups", "true"); // Enable popups
   webview.src = url;
   webview.style.display = "none";
+
+  // Additional webview settings for better compatibility
+  webview.setAttribute("webpreferences", "nativeWindowOpen=true");
+  webview.setAttribute("webpreferences", "contextIsolation=false");
 
   // Webview event listeners
   webview.addEventListener("did-start-loading", () => {
     // Show loading indicator if needed
   });
 
+  webview.addEventListener("new-window", (e) => {
+    // Handle new window/popup events
+    if (e.disposition === "new-window" || e.disposition === "foreground-tab") {
+      createNewTab(e.url);
+    } else {
+      // For other cases, open in the same tab
+      webview.src = e.url;
+    }
+  });
+
   webview.addEventListener("dom-ready", () => {
     // Now it's safe to switch to the tab
     switchToTab(tabId);
+
+    // Inject custom CSS for better Google sign-in compatibility
+    webview.insertCSS(`
+      /* Fix Google sign-in popup styles */
+      .signin-popup {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+      }
+    `);
   });
 
   webview.addEventListener("did-stop-loading", () => {
@@ -182,7 +209,6 @@ function createNewTab(url) {
   webviewContainer.appendChild(webview);
 
   // Initial switch to the tab (will be updated when dom-ready fires)
-  // Just show the tab UI without trying to access webview methods yet
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.classList.remove("active");
   });

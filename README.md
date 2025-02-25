@@ -60,12 +60,10 @@ This will create distributable packages in the `dist` directory.
 ```
 oss-browser/
 ├── src/
-│   ├── main/       # Electron main process files
-│   │   ├── main.js
-│   ├── renderer/   # UI and renderer process files
-│   │   ├── index.html
-│   │   ├── styles.css
-│   │   ├── app.js
+│   ├── main.js     # Electron main process file
+│   ├── index.html  # UI file
+│   ├── styles.css  # Styles file
+│   ├── app.js      # Renderer process file
 ├── package.json
 ├── README.md
 ```

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "build": "electron-builder",
+    "build": "bun run build-app",
+    "build-app": "electron-builder",
     "lint": "eslint ."
   },
   "keywords": [
@@ -40,13 +41,16 @@
       "package.json"
     ],
     "mac": {
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.utilities",
+      "icon": "src/Logo.png"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "src/Logo.png"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "src/Logo.png"
     }
   }
 }

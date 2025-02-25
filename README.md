@@ -30,7 +30,7 @@ A beautiful, modern, fully customizable open-source browser built on Chromium an
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/oss-browser.git
+   git clone https://github.com/nworbdier/oss-browser.git
    cd oss-browser
    ```
 
@@ -42,7 +42,7 @@ A beautiful, modern, fully customizable open-source browser built on Chromium an
 
 3. Start the development server:
    ```bash
-   bun run dev
+   bun dev
    ```
 
 ## Building for Production

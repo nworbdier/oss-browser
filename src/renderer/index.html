@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OSS Browser</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16'><circle cx='8' cy='8' r='8' fill='%234285f4'/></svg>"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body>
+    <div class="browser-container">
+      <div class="sidebar glass-effect">
+        <!-- Sidebar content (tabs) will go here -->
+        <div class="tabs-container">
+          <div class="tab-actions">
+            <button id="new-tab-btn">+</button>
+          </div>
+          <div id="tabs-list">
+            <!-- Tabs will be dynamically added here -->
+          </div>
+        </div>
+      </div>
+      <div id="sidebar-resizer"></div>
+      <div class="main-content">
+        <div class="navigation-bar glass-effect">
+          <button id="back-btn"><i class="fas fa-arrow-left"></i></button>
+          <button id="forward-btn"><i class="fas fa-arrow-right"></i></button>
+          <button id="refresh-btn"><i class="fas fa-sync-alt"></i></button>
+          <input
+            type="text"
+            id="url-bar"
+            placeholder="Enter URL or search..."
+            class="glass-input"
+          />
+        </div>
+        <div id="webview-container">
+          <!-- Active webview will be displayed here -->
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

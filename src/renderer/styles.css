@@ -12,7 +12,11 @@
   --border-color: rgba(255, 255, 255, 0.2);
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  --sidebar-resizer-width: 12px; /* Set resizer width to any width using css variable */
+  --sidebar-resizer-width: 4px; /* Reduced from 12px */
+  --sidebar-width: 300px;
+  --sidebar-collapsed-width: 0px;
+  --toolbar-height: 48px; /* Reduced from 60px */
+  --transition-speed: 0.2s;
 }
 
 body {
@@ -44,25 +48,32 @@ body.resizing {
 }
 
 .sidebar {
-  width: 300px;
+  width: var(--sidebar-width);
   height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 10;
   border-radius: 0 16px 16px 0;
-  transition: width 0.2s ease;
+  transition: width var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  will-change: width;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
 }
 
 #sidebar-resizer {
-  width: var(--sidebar-resizer-width); /* Use css variable for width */
+  width: var(--sidebar-resizer-width);
   height: 100%;
   cursor: col-resize;
   position: absolute;
-  left: 300px;
+  right: 0;
   top: 0;
   z-index: 20;
   background-color: transparent;
+  transition: background-color 0.15s ease;
 }
 
 #sidebar-resizer:hover {
@@ -182,29 +193,29 @@ body.resizing {
 }
 
 .navigation-bar {
-  height: 60px;
+  height: var(--toolbar-height);
   display: flex;
   align-items: center;
   padding: 0 16px;
   border-radius: 16px;
-  margin: 16px 16px;
+  margin: 12px 16px; /* Reduced from 16px 16px */
   z-index: 5;
 }
 
 .navigation-bar button {
   background: none;
   border: none;
-  font-size: 18px;
-  margin-right: 16px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  font-size: 16px; /* Reduced from 18px */
+  margin-right: 12px; /* Reduced from 16px */
+  width: 32px; /* Reduced from 36px */
+  height: 32px; /* Reduced from 36px */
+  border-radius: 8px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
   color: var(--text-color);
+  transition: all 0.2s;
 }
 
 .navigation-bar button:hover {
@@ -215,20 +226,18 @@ body.resizing {
 
 .glass-input {
   background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid var(--border-color);
+  border-radius: 8px; /* Reduced from 12px */
+  padding: 8px 16px; /* Reduced from 10px 20px */
 }
 
 #url-bar {
   flex: 1;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
-  font-size: 14px;
+  height: 36px; /* Reduced from 40px */
+  font-size: 14px; /* Reduced from 16px */
+  color: var(--text-color);
   outline: none;
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 #url-bar:focus {
@@ -267,4 +276,26 @@ webview {
 
 #tabs-list::-webkit-scrollbar-thumb:hover {
   background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* New styles for sidebar toggle button */
+#sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  transition: all 0.2s;
+  margin-right: 12px;
+}
+
+#sidebar-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color);
 }

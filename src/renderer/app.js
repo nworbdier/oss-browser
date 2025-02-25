@@ -13,11 +13,13 @@ const forwardBtn = document.getElementById("forward-btn");
 const refreshBtn = document.getElementById("refresh-btn");
 const sidebar = document.querySelector(".sidebar");
 const resizer = document.getElementById("sidebar-resizer");
+const sidebarToggle = document.getElementById("sidebar-toggle");
 
 // Initialize the browser with a default tab
 document.addEventListener("DOMContentLoaded", () => {
   createNewTab("https://google.com");
   setupSidebarResizing();
+  setupSidebarToggle();
   setupKeyboardShortcuts();
 });
 
@@ -293,8 +295,7 @@ function setupKeyboardShortcuts() {
     // Toggle sidebar with Cmd+S (Mac) or Ctrl+S (Windows/Linux)
     if ((e.metaKey || e.ctrlKey) && e.key === "s") {
       e.preventDefault();
-      sidebarVisible = !sidebarVisible;
-      sidebar.style.width = sidebarVisible ? "240px" : "0px"; // Or your default sidebar width
+      toggleSidebar();
     }
   });
 }
@@ -308,21 +309,60 @@ function setupSidebarResizing() {
     startX = e.clientX;
     startWidth = parseInt(window.getComputedStyle(sidebar).width, 10);
 
+    // Add a class to the body to indicate resizing is in progress
     document.body.classList.add("resizing");
+
+    // Prevent text selection during resize
+    e.preventDefault();
   });
 
   document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
 
+    // Calculate new width with a smoother algorithm
     const width = startWidth + (e.clientX - startX);
+
     // Set min and max width constraints
     if (width >= 200 && width <= 500) {
+      // Update CSS variable for sidebar width
+      document.documentElement.style.setProperty(
+        "--sidebar-width",
+        `${width}px`
+      );
       sidebar.style.width = `${width}px`;
     }
   });
 
   document.addEventListener("mouseup", () => {
-    isResizing = false;
-    document.body.classList.remove("resizing");
+    if (isResizing) {
+      isResizing = false;
+      document.body.classList.remove("resizing");
+    }
   });
+
+  // Cancel resize if mouse leaves the window
+  document.addEventListener("mouseleave", () => {
+    if (isResizing) {
+      isResizing = false;
+      document.body.classList.remove("resizing");
+    }
+  });
+}
+
+function setupSidebarToggle() {
+  sidebarToggle.addEventListener("click", toggleSidebar);
+}
+
+function toggleSidebar() {
+  sidebarVisible = !sidebarVisible;
+
+  if (sidebarVisible) {
+    sidebar.classList.remove("collapsed");
+    sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    sidebarToggle.title = "Hide sidebar";
+  } else {
+    sidebar.classList.add("collapsed");
+    sidebarToggle.innerHTML = '<i class="fas fa-expand"></i>';
+    sidebarToggle.title = "Show sidebar";
+  }
 }

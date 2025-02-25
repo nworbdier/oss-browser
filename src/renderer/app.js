@@ -14,6 +14,7 @@ const refreshBtn = document.getElementById("refresh-btn");
 const sidebar = document.querySelector(".sidebar");
 const resizer = document.getElementById("sidebar-resizer");
 const sidebarToggle = document.getElementById("sidebar-toggle");
+const switchAccountBtn = document.getElementById("switch-account-btn");
 
 // Initialize the browser with a default tab
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSidebarResizing();
   setupSidebarToggle();
   setupKeyboardShortcuts();
+  setupAccountSwitching();
 });
 
 // Event Listeners
@@ -125,7 +127,18 @@ function createNewTab(url) {
   webview.addEventListener("new-window", (e) => {
     // Handle new window/popup events
     if (e.disposition === "new-window" || e.disposition === "foreground-tab") {
-      createNewTab(e.url);
+      // Check if this is an authentication popup
+      if (isAuthenticationUrl(e.url)) {
+        // Create a new tab for authentication
+        const authTabId = createNewTab(e.url);
+
+        // Store the original tab ID to return to after authentication
+        if (typeof authTabId === "string") {
+          storeAuthenticationContext(authTabId, activeTabId);
+        }
+      } else {
+        createNewTab(e.url);
+      }
     } else {
       // For other cases, open in the same tab
       webview.src = e.url;
@@ -214,6 +227,8 @@ function createNewTab(url) {
   });
   tabElement.classList.add("active");
   activeTabId = tabId;
+
+  return tabId;
 }
 
 function switchToTab(tabId) {
@@ -323,6 +338,142 @@ function setupKeyboardShortcuts() {
       e.preventDefault();
       toggleSidebar();
     }
+
+    // Refresh webview with Cmd+R or Cmd+Shift+R (Mac) or Ctrl+R or Ctrl+Shift+R (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && (e.key === "r" || e.key === "R")) {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview) {
+        // Hard reload (bypass cache) if Shift is pressed
+        if (e.shiftKey) {
+          activeWebview.reloadIgnoringCache();
+        } else {
+          activeWebview.reload();
+        }
+      }
+    }
+
+    // Switch account with Cmd+Shift+A (Mac) or Ctrl+Shift+A (Windows/Linux)
+    if (
+      (e.metaKey || e.ctrlKey) &&
+      e.shiftKey &&
+      (e.key === "a" || e.key === "A")
+    ) {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview) {
+        const currentUrl = activeWebview.getURL();
+        const authUrl = determineAuthUrl(currentUrl);
+
+        if (authUrl) {
+          const authTabId = createNewTab(authUrl);
+          storeAuthenticationContext(authTabId, activeTabId);
+        }
+      }
+    }
+
+    // New tab with Cmd+T (Mac) or Ctrl+T (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "t") {
+      e.preventDefault();
+      createNewTab("https://google.com");
+    }
+
+    // Navigate back with Cmd+[ or Cmd+Left (Mac) or Ctrl+[ or Alt+Left (Windows/Linux)
+    if (
+      ((e.metaKey || e.ctrlKey) && e.key === "[") ||
+      (e.metaKey && e.key === "ArrowLeft") ||
+      (e.altKey && e.key === "ArrowLeft")
+    ) {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview && activeWebview.canGoBack()) {
+        activeWebview.goBack();
+      }
+    }
+
+    // Navigate forward with Cmd+] or Cmd+Right (Mac) or Ctrl+] or Alt+Right (Windows/Linux)
+    if (
+      ((e.metaKey || e.ctrlKey) && e.key === "]") ||
+      (e.metaKey && e.key === "ArrowRight") ||
+      (e.altKey && e.key === "ArrowRight")
+    ) {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview && activeWebview.canGoForward()) {
+        activeWebview.goForward();
+      }
+    }
+
+    // Focus URL bar with Cmd+L (Mac) or Ctrl+L (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "l") {
+      e.preventDefault();
+      urlBar.focus();
+      urlBar.select();
+    }
+
+    // Find in page with Cmd+F (Mac) or Ctrl+F (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview) {
+        // Send find command to webview
+        activeWebview.findInPage("");
+      }
+    }
+
+    // Switch to specific tab with Cmd+1, Cmd+2, etc. (Mac) or Ctrl+1, Ctrl+2, etc. (Windows/Linux)
+    if (
+      (e.metaKey || e.ctrlKey) &&
+      !isNaN(parseInt(e.key)) &&
+      parseInt(e.key) > 0
+    ) {
+      e.preventDefault();
+      const tabIndex = parseInt(e.key) - 1;
+      if (tabs[tabIndex]) {
+        switchToTab(tabs[tabIndex].id);
+      }
+    }
+
+    // Switch to last tab with Cmd+9 (Mac) or Ctrl+9 (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "9") {
+      e.preventDefault();
+      if (tabs.length > 0) {
+        switchToTab(tabs[tabs.length - 1].id);
+      }
+    }
+
+    // Zoom in with Cmd+ (Mac) or Ctrl+ (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && (e.key === "+" || e.key === "=")) {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview) {
+        // Get current zoom factor and increase it
+        activeWebview.getZoomFactor((factor) => {
+          activeWebview.setZoomFactor(factor + 0.1);
+        });
+      }
+    }
+
+    // Zoom out with Cmd- (Mac) or Ctrl- (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "-") {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview) {
+        // Get current zoom factor and decrease it
+        activeWebview.getZoomFactor((factor) => {
+          activeWebview.setZoomFactor(Math.max(0.1, factor - 0.1));
+        });
+      }
+    }
+
+    // Reset zoom with Cmd+0 (Mac) or Ctrl+0 (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "0") {
+      e.preventDefault();
+      const activeWebview = getActiveWebview();
+      if (activeWebview) {
+        activeWebview.setZoomFactor(1.0);
+      }
+    }
   });
 }
 
@@ -390,5 +541,212 @@ function toggleSidebar() {
     sidebar.classList.add("collapsed");
     sidebarToggle.innerHTML = '<i class="fas fa-expand"></i>';
     sidebarToggle.title = "Show sidebar";
+  }
+}
+
+// Setup account switching functionality
+function setupAccountSwitching() {
+  // Add click event listener to the switch account button
+  switchAccountBtn.addEventListener("click", () => {
+    const activeWebview = getActiveWebview();
+    if (!activeWebview) return;
+
+    // Get the current URL
+    const currentUrl = activeWebview.getURL();
+
+    // Determine the appropriate authentication URL based on the current site
+    let authUrl = determineAuthUrl(currentUrl);
+
+    if (authUrl) {
+      // Create a new tab for authentication
+      const authTabId = createNewTab(authUrl);
+
+      // Store the original tab ID to return to after authentication
+      storeAuthenticationContext(authTabId, activeTabId);
+    }
+  });
+}
+
+// Determine the appropriate authentication URL based on the current site
+function determineAuthUrl(currentUrl) {
+  try {
+    const urlObj = new URL(currentUrl);
+    const hostname = urlObj.hostname;
+
+    // Common authentication endpoints for popular services
+    const authEndpoints = {
+      "google.com":
+        "https://accounts.google.com/signin/v2/identifier?hl=en&passive=true&continue=" +
+        encodeURIComponent(currentUrl),
+      "youtube.com":
+        "https://accounts.google.com/signin/v2/identifier?hl=en&passive=true&continue=" +
+        encodeURIComponent(currentUrl),
+      "gmail.com":
+        "https://accounts.google.com/signin/v2/identifier?hl=en&passive=true&continue=" +
+        encodeURIComponent(currentUrl),
+      "microsoft.com":
+        "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?response_type=code&client_id=4765445b-32c6-49b0-83e6-1d93765276ca&redirect_uri=" +
+        encodeURIComponent(currentUrl),
+      "github.com":
+        "https://github.com/login?return_to=" + encodeURIComponent(currentUrl),
+      "twitter.com":
+        "https://twitter.com/i/flow/login?redirect_after_login=" +
+        encodeURIComponent(currentUrl),
+      "facebook.com":
+        "https://www.facebook.com/login.php?next=" +
+        encodeURIComponent(currentUrl),
+      "amazon.com":
+        "https://www.amazon.com/ap/signin?openid.return_to=" +
+        encodeURIComponent(currentUrl),
+      "reddit.com":
+        "https://www.reddit.com/login/?dest=" + encodeURIComponent(currentUrl),
+      "linkedin.com":
+        "https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin",
+    };
+
+    // Check if the current hostname matches any of our known services
+    for (const [domain, authUrl] of Object.entries(authEndpoints)) {
+      if (hostname.includes(domain)) {
+        return authUrl;
+      }
+    }
+
+    // For unknown services, try to find a login page
+    // First, check if we're already on a login page
+    if (isAuthenticationUrl(currentUrl)) {
+      return currentUrl;
+    }
+
+    // For unknown sites, try common login paths
+    const commonLoginPaths = ["/login", "/signin", "/auth", "/account/login"];
+    for (const path of commonLoginPaths) {
+      const possibleLoginUrl = `${urlObj.protocol}//${urlObj.hostname}${path}`;
+      // We can't check if this URL exists without actually navigating to it,
+      // so we'll just return the first one we construct
+      return possibleLoginUrl;
+    }
+
+    // If all else fails, just return the current URL
+    return currentUrl;
+  } catch (error) {
+    console.log("Error determining auth URL:", error);
+    return null;
+  }
+}
+
+// Authentication related variables and functions
+let authContextMap = new Map(); // Maps auth tab IDs to original tab IDs
+
+// Check if a URL is likely an authentication URL
+function isAuthenticationUrl(url) {
+  const authDomains = [
+    "accounts.google.com",
+    "login.microsoftonline.com",
+    "login.live.com",
+    "login.yahoo.com",
+    "github.com/login",
+    "api.twitter.com/oauth",
+    "www.facebook.com/login",
+    "login.salesforce.com",
+    "auth.atlassian.com",
+    "signin.aws.amazon.com",
+    "login.okta.com",
+  ];
+
+  const authKeywords = [
+    "login",
+    "signin",
+    "sign-in",
+    "auth",
+    "authenticate",
+    "oauth",
+    "sso",
+    "saml",
+    "account",
+    "session",
+  ];
+
+  try {
+    const urlObj = new URL(url);
+
+    // Check if domain matches known auth domains
+    if (authDomains.some((domain) => urlObj.hostname.includes(domain))) {
+      return true;
+    }
+
+    // Check for auth keywords in path
+    if (
+      authKeywords.some((keyword) =>
+        urlObj.pathname.toLowerCase().includes(keyword)
+      )
+    ) {
+      return true;
+    }
+
+    // Check for auth keywords in query parameters
+    if (
+      authKeywords.some((keyword) =>
+        urlObj.search.toLowerCase().includes(keyword)
+      )
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.log("Error parsing URL:", error);
+    return false;
+  }
+}
+
+// Store authentication context
+function storeAuthenticationContext(authTabId, originalTabId) {
+  authContextMap.set(authTabId, originalTabId);
+
+  // Set up a listener for this auth tab to detect when authentication is complete
+  const authWebview = document.getElementById("webview-" + authTabId);
+  if (authWebview) {
+    authWebview.addEventListener("did-navigate", handleAuthNavigation);
+    authWebview.addEventListener("did-navigate-in-page", handleAuthNavigation);
+  }
+}
+
+// Handle navigation events in auth tabs
+function handleAuthNavigation(e) {
+  const webview = e.target;
+  const tabId = webview.id.replace("webview-", "");
+
+  // Check if this is an auth tab
+  if (authContextMap.has(tabId)) {
+    const currentUrl = webview.getURL();
+
+    // Check if we've navigated away from an auth page, which might indicate completion
+    if (!isAuthenticationUrl(currentUrl)) {
+      // Authentication might be complete
+      const originalTabId = authContextMap.get(tabId);
+
+      // Remove the listener to avoid duplicate handling
+      webview.removeEventListener("did-navigate", handleAuthNavigation);
+      webview.removeEventListener("did-navigate-in-page", handleAuthNavigation);
+
+      // Clean up the auth context
+      authContextMap.delete(tabId);
+
+      // Switch back to the original tab
+      if (originalTabId && document.getElementById(originalTabId)) {
+        // Wait a moment to ensure any redirects are complete
+        setTimeout(() => {
+          switchToTab(originalTabId);
+
+          // Refresh the original tab to reflect the new authentication state
+          const originalWebview = document.getElementById(
+            "webview-" + originalTabId
+          );
+          if (originalWebview) {
+            originalWebview.reload();
+          }
+        }, 1000);
+      }
+    }
   }
 }

@@ -301,3 +301,31 @@ webview {
   background-color: rgba(0, 0, 0, 0.05);
   color: var(--primary-color);
 }
+
+/* Account switching button */
+#switch-account-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  transition: all 0.2s;
+  margin-left: 12px;
+}
+
+#switch-account-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+#switch-account-btn i {
+  font-size: 18px;
+}
